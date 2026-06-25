@@ -228,13 +228,34 @@ export function ChatInterface({ expenses }: ChatInterfaceProps) {
                   {msg.content}
                 </div>
               ) : (
-                <div className="max-w-[85%] text-sm px-4 py-3 rounded-lg bg-muted text-foreground leading-relaxed prose prose-sm dark:prose-invert max-w-none
+                <div className="w-full text-sm px-4 py-3 rounded-lg bg-muted text-foreground leading-relaxed
+                  prose prose-sm dark:prose-invert max-w-none
                   prose-headings:text-foreground prose-headings:font-semibold
                   prose-strong:text-foreground
                   prose-table:text-xs prose-th:py-1.5 prose-td:py-1.5
-                  prose-p:my-1.5 prose-li:my-0.5 prose-ul:my-1.5 prose-ol:my-1.5">
+                  prose-p:my-1.5 prose-li:my-0.5 prose-ul:my-1.5 prose-ol:my-1.5
+                  prose-img:rounded-lg prose-img:border prose-img:border-border prose-img:max-w-full">
                   {msg.content ? (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        img: ({ src, alt }) => (
+                          <img
+                            src={src}
+                            alt={alt ?? ''}
+                            className="rounded-lg border border-border max-w-full my-3 shadow-sm"
+                            style={{ maxHeight: 420, objectFit: 'contain' }}
+                          />
+                        ),
+                        table: ({ children }) => (
+                          <div className="overflow-x-auto my-2">
+                            <table className="text-xs border-collapse w-full">{children}</table>
+                          </div>
+                        ),
+                      }}
+                    >
+                      {msg.content}
+                    </ReactMarkdown>
                   ) : (
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />

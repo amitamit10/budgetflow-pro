@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, ChevronLeft, ChevronRight, Settings2 } from 'lucide-react'
 import { Expense, BudgetCategory, Category, CATEGORIES } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,6 +9,7 @@ import { ExpenseForm } from '@/components/budget/ExpenseForm'
 import { ExpenseList } from '@/components/budget/ExpenseList'
 import { BudgetLimitCard } from '@/components/budget/BudgetLimitCard'
 import { RecurringExpenses } from '@/components/budget/RecurringExpenses'
+import { BudgetSetupDialog } from '@/components/budget/BudgetSetupDialog'
 
 export default function BudgetPage() {
   const now = new Date()
@@ -16,8 +17,10 @@ export default function BudgetPage() {
   const [year, setYear] = useState(now.getFullYear())
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [categoryLimits, setCategoryLimits] = useState<BudgetCategory[]>([])
+  const [income, setIncome] = useState(0)
   const [allExpenses, setAllExpenses] = useState<Expense[]>([])
   const [showForm, setShowForm] = useState(false)
+  const [showBudgetSetup, setShowBudgetSetup] = useState(false)
   const [loading, setLoading] = useState(true)
 
   const fetchData = useCallback(async () => {
@@ -34,6 +37,7 @@ export default function BudgetPage() {
     ])
     setExpenses(expData ?? [])
     setCategoryLimits(budgetData?.[0]?.budget_categories ?? [])
+    setIncome(budgetData?.[0]?.income ?? 0)
     setAllExpenses(allData ?? [])
     setLoading(false)
   }, [month, year])
@@ -71,10 +75,16 @@ export default function BudgetPage() {
             </Button>
           </div>
         </div>
-        <Button onClick={() => setShowForm(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Expense
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowBudgetSetup(true)} className="gap-2">
+            <Settings2 className="h-4 w-4" />
+            {categoryLimits.length > 0 ? 'Edit Budget' : 'Set Budget'}
+          </Button>
+          <Button onClick={() => setShowForm(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Expense
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-6">
@@ -95,10 +105,14 @@ export default function BudgetPage() {
 
         {/* Budget limits panel */}
         <div className="w-72 shrink-0 space-y-4">
-          {categoryLimits.length > 0 && (
+          {categoryLimits.length > 0 ? (
             <Card>
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
                 <CardTitle className="text-sm font-medium">Budget Limits</CardTitle>
+                <Button variant="ghost" size="icon" className="h-6 w-6"
+                  onClick={() => setShowBudgetSetup(true)}>
+                  <Settings2 className="h-3.5 w-3.5" />
+                </Button>
               </CardHeader>
               <CardContent className="space-y-4">
                 {CATEGORIES.map((cat: Category) => {
@@ -115,6 +129,19 @@ export default function BudgetPage() {
                 })}
               </CardContent>
             </Card>
+          ) : (
+            !loading && (
+              <Card className="border-dashed">
+                <CardContent className="py-8 text-center space-y-3">
+                  <p className="text-sm text-muted-foreground">No budget set for this month</p>
+                  <Button size="sm" variant="outline" onClick={() => setShowBudgetSetup(true)}
+                    className="gap-1.5">
+                    <Settings2 className="h-3.5 w-3.5" />
+                    Set Budget
+                  </Button>
+                </CardContent>
+              </Card>
+            )
           )}
 
           <RecurringExpenses allExpenses={allExpenses} />
@@ -125,6 +152,16 @@ export default function BudgetPage() {
         open={showForm}
         onClose={() => setShowForm(false)}
         onSaved={(e) => setExpenses((prev) => [e, ...prev])}
+      />
+
+      <BudgetSetupDialog
+        open={showBudgetSetup}
+        onClose={() => setShowBudgetSetup(false)}
+        onSaved={fetchData}
+        month={month}
+        year={year}
+        initialIncome={income}
+        initialLimits={Object.fromEntries(categoryLimits.map((c) => [c.category, c.limit_amount]))}
       />
     </div>
   )

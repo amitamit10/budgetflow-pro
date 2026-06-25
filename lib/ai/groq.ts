@@ -5,7 +5,7 @@ export const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 })
 
-export const MODEL = 'llama-3.3-70b-versatile'
+export const MODEL = 'openai/gpt-oss-120b'
 
 export function buildSystemPrompt(mode: AIMode, expenses: Expense[]): string {
   const expenseSummary = JSON.stringify(

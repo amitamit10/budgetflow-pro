@@ -21,8 +21,8 @@ export async function POST(req: NextRequest) {
     model: MODEL,
     messages: [{ role: 'system', content: systemPrompt }, ...messages],
     stream: true,
-    temperature: 0.7,
-    max_tokens: 1024,
+    temperature: 0.4,
+    max_tokens: 4096,
   })
 
   const encoder = new TextEncoder()
@@ -30,9 +30,7 @@ export async function POST(req: NextRequest) {
     async start(controller) {
       for await (const chunk of stream) {
         const text = chunk.choices[0]?.delta?.content ?? ''
-        if (text) {
-          controller.enqueue(encoder.encode(text))
-        }
+        if (text) controller.enqueue(encoder.encode(text))
       }
       controller.close()
     },

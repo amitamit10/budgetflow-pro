@@ -1,7 +1,5 @@
 import NextAuth from 'next-auth'
 import Google from 'next-auth/providers/google'
-import { SupabaseAdapter } from '@auth/supabase-adapter'
-import jwt from 'jsonwebtoken'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -10,24 +8,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
-  adapter: SupabaseAdapter({
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    secret: process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  }),
+  session: { strategy: 'jwt' },
   callbacks: {
-    async session({ session, user }) {
-      const signingSecret = process.env.SUPABASE_JWT_SECRET
-      if (signingSecret) {
-        const payload = {
-          aud: 'authenticated',
-          exp: Math.floor(new Date(session.expires).getTime() / 1000),
-          sub: user.id,
-          email: user.email,
-          role: 'authenticated',
-        }
-        session.supabaseAccessToken = jwt.sign(payload, signingSecret)
-      }
-      session.user.id = user.id
+    async jwt({ token, profile }) {
+      if (profile?.sub) token.sub = profile.sub
+      return token
+    },
+    async session({ session, token }) {
+      if (token.sub) session.user.id = token.sub
       return session
     },
   },
@@ -35,7 +23,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
 declare module 'next-auth' {
   interface Session {
-    supabaseAccessToken?: string
     user: {
       id: string
       name?: string | null

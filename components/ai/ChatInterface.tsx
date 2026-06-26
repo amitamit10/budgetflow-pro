@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Send, Loader2, Trash2, Copy, Check } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { AIChart, parseChartSpec } from '@/components/ai/AIChart'
 import { ChatMessage, AIMode, Expense } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -239,14 +240,15 @@ export function ChatInterface({ expenses }: ChatInterfaceProps) {
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
-                        img: ({ src, alt }) => (
-                          <img
-                            src={src}
-                            alt={alt ?? ''}
-                            className="rounded-lg border border-border max-w-full my-3 shadow-sm"
-                            style={{ maxHeight: 420, objectFit: 'contain' }}
-                          />
-                        ),
+                        code({ className, children }) {
+                          const lang = /language-(\w+)/.exec(className ?? '')?.[1]
+                          const raw = String(children).trim()
+                          if (lang === 'chart') {
+                            const spec = parseChartSpec(raw)
+                            return spec ? <AIChart spec={spec} /> : <pre className="text-xs">{raw}</pre>
+                          }
+                          return <code className={className}>{children}</code>
+                        },
                         table: ({ children }) => (
                           <div className="overflow-x-auto my-2">
                             <table className="text-xs border-collapse w-full">{children}</table>
